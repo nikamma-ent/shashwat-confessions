@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pinocchio — Confess</title>
+    <meta name="description" content="Pinocchio Out Now!">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://pinocchio.shashwatbulusu.xyz/confessions/">
+    <meta property="og:title" content="Pinocchio — Confessions">
+    <meta property="og:description" content="Pinocchio Out Now!">
+    <meta property="og:image" content="https://pinocchio.shashwatbulusu.xyz/confessions/og-image.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Pinocchio — Confessions">
+    <meta name="twitter:description" content="Pinocchio Out Now!">
+    <meta name="twitter:image" content="https://pinocchio.shashwatbulusu.xyz/confessions/og-image.jpg">
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VDC1Y7K7Q9"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-VDC1Y7K7Q9');
+    </script>
+
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <style>
+        @font-face {
+            font-family: 'Qordhion';
+            src: url('fonts/Qordhion.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'Migra';
+            src: url('fonts/Migra-ExtraLight.otf') format('opentype');
+            font-weight: 200;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'MigraRegular';
+            src: url('fonts/Migra-Regular.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'BodoniOrnaments';
+            src: url('fonts/BodoniOrnaments.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --crimson:       #650000;
+            --crimson-dark:  #400000;
+            --crimson-mid:   #520000;
+            --green:         #00AA00;
+            --green-bright:  #22DD22;
+            --cream:         #FFFFFF;
+            --cream-dim:     #FFFFFF;
+        }
+
+        body {
+            background-color: var(--crimson);
+            color: var(--cream);
+            font-family: 'Migra', serif;
+            font-size: 16px;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* SVG noise grain overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+            opacity: 0.04;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        /* ── ORNAMENT DIVIDER ────────────────────────── */
+        .ahs {
+            text-align: center;
+            color: var(--crimson-mid);
+            font-family: 'BodoniOrnaments';
+            font-size: 22px;
+            letter-spacing: 16px;
+            padding: 8px 0;
+            user-select: none;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        /* ── HEADER ──────────────────────────────────── */
+        header {
+            text-align: center;
+            padding: 20px 24px 10px;
+        }
+
+        .album-title {
+            width: clamp(120px, 15vw, 160px);
+            height: auto;
+            filter: drop-shadow(0 0 40px rgba(0, 180, 0, 0.25));
+        }
+
+        .artist-name {
+            font-family: 'Qordhion', serif;
+            font-size: clamp(16px, 3vw, 22px);
+            color: var(--cream);
+            margin-top: 16px;
+            letter-spacing: 3px;
+        }
+
+        .presave-btn {
+            display: inline-block;
+            margin-top: 14px;
+            padding: 6px 14px;
+            background: transparent;
+            border: 1px solid rgba(0, 170, 0, 0.35);
+            color: var(--cream-dim);
+            font-family: 'Migra', serif;
+            font-size: 11px;
+            letter-spacing: 1px;
+            border-radius: 20px;
+            text-decoration: none;
+            opacity: 0.75;
+            transition: all 0.18s;
+        }
+
+        .presave-btn:hover {
+            opacity: 1;
+            border-color: var(--green);
+            color: var(--green);
+        }
+
+        /* ── INTRO ───────────────────────────────────── */
+        .intro {
+            max-width: 560px;
+            margin: 20px auto 20px;
+            padding: 0 28px;
+            text-align: center;
+        }
+
+        .intro-quote {
+            font-size: clamp(17px, 2.5vw, 22px);
+            font-style: italic;
+            color: var(--cream);
+            line-height: 1.55;
+        }
+
+        .intro-attr {
+            margin-top: 14px;
+            font-size: 12px;
+            letter-spacing: 2px;
+            color: var(--cream-dim);
+        }
+
+        .intro-body {
+            margin-top: 18px;
+            font-size: 14px;
+            color: var(--cream-dim);
+            line-height: 1.6;
+        }
+
+        /* ── CONFESSION FORM ─────────────────────────── */
+        .form-section {
+            max-width: 660px;
+            margin: 0 auto;
+            padding: 20px 28px 48px;
+        }
+
+        .prompt {
+            font-family: 'Qordhion', serif;
+            font-size: clamp(24px, 4.5vw, 40px);
+            color: var(--green);
+            text-align: center;
+            margin-bottom: 24px;
+            line-height: 1.2;
+        }
+
+        .word-label {
+            font-size: 10px;
+            letter-spacing: 4px;
+            color: var(--cream-dim);
+            text-align: center;
+            margin-bottom: 14px;
+            text-transform: uppercase;
+        }
+
+        .pills {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 22px;
+        }
+
+        .pill {
+            width: 110px;
+            padding: 7px 0;
+            text-align: center;
+            border: 1px solid rgba(0, 170, 0, 0.35);
+            border-radius: 24px;
+            background: transparent;
+            color: var(--cream-dim);
+            font-family: 'Migra', serif;
+            font-size: 13px;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.18s;
+        }
+
+        .pill:hover {
+            border-color: var(--green);
+            color: var(--green);
+        }
+
+        .pill.active {
+            background: var(--green);
+            border-color: var(--green);
+            color: var(--crimson-dark);
+            font-weight: 700;
+        }
+
+        .input-wrap {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 130px;
+            background: var(--crimson-dark);
+            border: 1px solid rgba(0, 170, 0, 0.25);
+            border-radius: 3px;
+            color: var(--cream);
+            font-family: 'Migra', serif;
+            font-size: 16px;
+            line-height: 1.75;
+            padding: 22px 20px;
+            resize: none;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        textarea::placeholder {
+            color: rgba(255, 255, 255, 0.2);
+            font-style: italic;
+        }
+
+        textarea:focus {
+            border-color: rgba(0, 170, 0, 0.6);
+        }
+
+        .char-count {
+            position: absolute;
+            bottom: 12px;
+            right: 14px;
+            font-size: 11px;
+            color: var(--cream-dim);
+            opacity: 0.4;
+        }
+
+        .submit-btn {
+            display: block;
+            width: 100%;
+            padding: 17px;
+            background: transparent;
+            border: 1px solid var(--green);
+            color: var(--green);
+            font-family: 'Qordhion', serif;
+            font-size: 24px;
+            letter-spacing: 3px;
+            cursor: pointer;
+            border-radius: 2px;
+            transition: all 0.18s;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            background: var(--green);
+            color: var(--crimson-dark);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.3;
+            cursor: default;
+        }
+
+        .success {
+            text-align: center;
+            font-size: 13px;
+            font-style: italic;
+            color: var(--green);
+            margin-top: 16px;
+            min-height: 20px;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        .success.show { opacity: 1; }
+
+        /* ── WALL ────────────────────────────────────── */
+        .wall-section {
+            max-width: 900px;
+            margin: 60px auto 100px;
+            padding: 0 24px;
+        }
+
+        .wall-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            border-bottom: 1px solid rgba(0,0,0,0.3);
+            padding-bottom: 16px;
+        }
+
+        .wall-title {
+            font-family: 'Qordhion', serif;
+            font-size: 30px;
+            color: var(--green);
+        }
+
+        .wall-count {
+            font-size: 11px;
+            letter-spacing: 3px;
+            color: var(--cream-dim);
+        }
+
+        .content-warning {
+            font-size: 12px;
+            font-style: italic;
+            color: var(--cream-dim);
+            margin: -12px 0 28px;
+        }
+
+        .wall-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1px;
+            background: rgba(0,0,0,0.35);
+        }
+
+        .card {
+            background: var(--crimson-dark);
+            padding: 26px 22px;
+            transition: background 0.15s;
+        }
+
+        .card:hover {
+            background: #360000;
+        }
+
+        .card-tag {
+            font-size: 10px;
+            letter-spacing: 4px;
+            color: var(--green);
+            opacity: 0.65;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .card-text {
+            font-size: 14px;
+            line-height: 1.75;
+            color: var(--cream);
+            font-style: italic;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .card.new { animation: slideIn 0.45s ease forwards; }
+
+        /* ── FOOTER ──────────────────────────────────── */
+        footer {
+            text-align: center;
+            padding: 40px 20px 64px;
+        }
+
+        .release {
+            font-family: 'Qordhion', serif;
+            font-size: 20px;
+            color: var(--green);
+            letter-spacing: 4px;
+        }
+
+        .release-num {
+            font-family: 'MigraRegular', serif;
+        }
+
+        .footer-note {
+            margin-top: 10px;
+            font-size: 11px;
+            color: var(--cream-dim);
+            letter-spacing: 2px;
+        }
+
+        .audio-toggle {
+            position: fixed;
+            top: 71px;
+            right: 18px;
+            z-index: 20;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(101, 0, 0, 0.6);
+            border: 1px solid rgba(0, 170, 0, 0.35);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.18s;
+        }
+
+        .audio-toggle:hover {
+            border-color: var(--green);
+        }
+
+        .audio-toggle-icon {
+            width: 18px;
+            height: 18px;
+            background-color: var(--cream-dim);
+            -webkit-mask-image: url('social/icon-volume-mute.png');
+            mask-image: url('social/icon-volume-mute.png');
+            -webkit-mask-size: contain;
+            mask-size: contain;
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+            -webkit-mask-position: center;
+            mask-position: center;
+            transition: background-color 0.18s;
+        }
+
+        .audio-toggle:hover .audio-toggle-icon {
+            background-color: var(--green);
+        }
+
+        .audio-toggle.playing .audio-toggle-icon {
+            -webkit-mask-image: url('social/icon-volume.png');
+            mask-image: url('social/icon-volume.png');
+        }
+
+        .socials {
+            margin-top: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .socials a {
+            display: flex;
+        }
+
+        .social-icon {
+            width: 18px;
+            height: 18px;
+            background-color: var(--cream-dim);
+            -webkit-mask-size: contain;
+            mask-size: contain;
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+            -webkit-mask-position: center;
+            mask-position: center;
+            transition: background-color 0.18s, opacity 0.18s;
+        }
+
+        .socials a:hover .social-icon {
+            background-color: var(--green);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+<audio id="bgAudio" src="photographs.m4a" loop preload="auto"></audio>
+<button id="audioToggle" class="audio-toggle" type="button" aria-label="Toggle music">
+    <span class="audio-toggle-icon"></span>
+</button>
+
+<div class="ahs" role="presentation" aria-hidden="true">AhsAhsAhsAhsAhsAhsAhsAhsAhsAhsAhsAhsAhsAhsAhsAhsAhsAhsAhsAhs</div>
+
+<header>
+    <img class="album-title" src="images/pinocchio-typography.png" alt="Pinocchio">
+    <div class="artist-name">Shashwat Bulusu</div>
+    <a class="presave-btn" href="https://tr.ee/Pinocchio" target="_blank" rel="noopener noreferrer">Out Now!</a>
+</header>
+
+<div class="intro">
+    <p class="intro-quote">"This album is my confession; it's a hard look at myself and my history to understand who I've become."</p>
+    <p class="intro-attr">— bullu</p>
+    <p class="intro-body">
+        Pinocchio is an album about the lies we tell to survive<br>
+        and how they hollow us out.
+    </p>
+</div>
+
+<div class="form-section">
+    <h2 class="prompt">what lie did you tell to survive?</h2>
+
+    <p class="word-label">I was protecting my</p>
+    <div class="pills">
+        <button class="pill" data-word="love"      onclick="selectWord(this)">love</button>
+        <button class="pill" data-word="pride"     onclick="selectWord(this)">pride</button>
+        <button class="pill" data-word="survival"  onclick="selectWord(this)">survival</button>
+        <button class="pill" data-word="childhood" onclick="selectWord(this)">childhood</button>
+    </div>
+
+    <div class="input-wrap">
+        <textarea
+            id="confessionText"
+            placeholder="write it here. no one will know it's you."
+            maxlength="200"
+            oninput="updateCount(this)"
+        ></textarea>
+        <span class="char-count" id="charCount">200</span>
+    </div>
+
+    <button class="submit-btn" id="submitBtn" onclick="submitConfession()">confess</button>
+    <p class="success" id="successMsg">your confession has been received.</p>
+</div>
+
+<div class="ahs" role="presentation" aria-hidden="true">AhsAhsAhsAhsAhsAhsAhsAhsAhsAhsAhsAhsAhsAhsAhsAhsAhsAhsAhsAhs</div>
+
+<div class="wall-section">
+    <div class="wall-header">
+        <h3 class="wall-title">confessions</h3>
+        <span class="wall-count" id="wallCount"></span>
+    </div>
+    <p class="content-warning">TW: This page may contain accounts of disturbing experiences.</p>
+    <div class="wall-grid" id="wall"></div>
+</div>
+
+<div class="ahs" role="presentation" aria-hidden="true">AhsAhsAhsAhsAhsAhsAhsAhsAhsAhsAhsAhsAhsAhsAhsAhsAhsAhsAhsAhs</div>
+
+<footer>
+    <div class="release">August <span class="release-num">21, 2026</span></div>
+    <p class="footer-note">Pinocchio &nbsp;·&nbsp; Shashwat Bulusu</p>
+
+    <nav class="socials" aria-label="Shashwat Bulusu on social media">
+        <a href="https://www.instagram.com/bullu.frog" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+            <span class="social-icon" style="-webkit-mask-image:url('social/icon-instagram.png'); mask-image:url('social/icon-instagram.png');"></span>
+        </a>
+        <a href="https://open.spotify.com/artist/0OxO7c4K0ozx5CTPDhFOXO?si=1eIFwlbdQ8-DN0rZXD3m_Q&utm_source=copy-link" target="_blank" rel="noopener noreferrer" aria-label="Spotify">
+            <span class="social-icon" style="-webkit-mask-image:url('social/icon-spotify.png'); mask-image:url('social/icon-spotify.png');"></span>
+        </a>
+        <a href="https://music.apple.com/in/artist/shashwat-bulusu/1457492073" target="_blank" rel="noopener noreferrer" aria-label="Apple Music">
+            <span class="social-icon" style="-webkit-mask-image:url('social/icon-applemusic.png'); mask-image:url('social/icon-applemusic.png');"></span>
+        </a>
+        <a href="https://youtube.com/@shashwatbulusu?si=FrGRzoYkyCvLcR8K" target="_blank" rel="noopener noreferrer" aria-label="YouTube">
+            <span class="social-icon" style="-webkit-mask-image:url('social/icon-youtube.png'); mask-image:url('social/icon-youtube.png');"></span>
+        </a>
+        <a href="https://shashwatbulusu.bandcamp.com/music" target="_blank" rel="noopener noreferrer" aria-label="Bandcamp">
+            <span class="social-icon" style="-webkit-mask-image:url('social/icon-bandcamp.png'); mask-image:url('social/icon-bandcamp.png');"></span>
+        </a>
+        <a href="https://mailchi.mp/7bf05710fd4c/shashwat-bulusu-mailing-community" target="_blank" rel="noopener noreferrer" aria-label="Mailing list">
+            <span class="social-icon" style="-webkit-mask-image:url('social/icon-mail.png'); mask-image:url('social/icon-mail.png');"></span>
+        </a>
+    </nav>
+</footer>
+
+<script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
+    import {
+        getFirestore, collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp
+    } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+
+    // ─── FIREBASE CONFIG ────────────────────────────────────────────
+    // Firebase Console → Project settings → General → Your apps → SDK setup and configuration
+    const firebaseConfig = {
+        apiKey: 'AIzaSyBGBPCOmQeYzE4GY1ws_CnybiKdSaQZMx4',
+        authDomain: 'pinocchio-confessions.firebaseapp.com',
+        projectId: 'pinocchio-confessions',
+        storageBucket: 'pinocchio-confessions.firebasestorage.app',
+        messagingSenderId: '304435528910',
+        appId: '1:304435528910:web:3f8a7028cd76caaaa2bc9f'
+    };
+    // ─────────────────────────────────────────────────────────────
+
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+    const confessionsRef = collection(db, 'confessions');
+
+    const VALID_WORDS = ['love', 'pride', 'survival', 'childhood'];
+
+    // Display-only word filter. Confessions are never blocked or altered
+    // in storage — matched words are just masked (first/last letter kept)
+    // wherever the text is rendered. Add more words here as needed.
+    const FILTERED_WORDS = [
+        'rape', 'raped', 'raping', 'rapist', 'rapists',
+        'molest', 'molested', 'molesting', 'molestation', 'molester',
+        'incest', 'pedophile', 'paedophile',
+        'fuck', 'fucking', 'fucked', 'motherfucker',
+        'shit', 'bullshit',
+        'bitch', 'bitches',
+        'asshole',
+        'bastard',
+        'cunt',
+        'dick',
+        'pussy',
+        'slut', 'slutty',
+        'whore',
+        'cock',
+        'nigger', 'nigga',
+        'faggot', 'fag',
+        'retard', 'retarded',
+        'suicide', 'suicidal',
+        'kill myself', 'killed myself', 'kys', 'kms',
+        'self-harm', 'selfharm', 'self harm', 'self-harming',
+        'cutting myself',
+        'overdose', 'overdosed',
+        'want to die', 'wanted to die', 'wanting to die'
+    ];
+
+    function censorMatch(match) {
+        if (match.length <= 2) return '*'.repeat(match.length);
+        return match[0] + '*'.repeat(match.length - 2) + match[match.length - 1];
+    }
+
+    function applyContentFilter(text) {
+        let result = text;
+        FILTERED_WORDS.forEach(word => {
+            const re = new RegExp('\\b' + word + '\\b', 'gi');
+            result = result.replace(re, censorMatch);
+        });
+        return result;
+    }
+
+    let selectedWord = null;
+    let totalCount   = 0;
+
+    function makeCard(c, isNew) {
+        const div = document.createElement('div');
+        div.className = 'card' + (isNew ? ' new' : '');
+        const tag = c.word && VALID_WORDS.includes(c.word) ? c.word : '';
+        div.innerHTML = `
+            <div class="card-tag">${tag || '&nbsp;'}</div>
+            <div class="card-text">"${escapeHtml(applyContentFilter(c.text))}"</div>
+        `;
+        return div;
+    }
+
+    function escapeHtml(str) {
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function setWallCount(n) {
+        document.getElementById('wallCount').textContent = n + ' confession' + (n === 1 ? '' : 's');
+    }
+
+    function showStatus(msg, isError) {
+        const el = document.getElementById('successMsg');
+        el.textContent = msg;
+        el.style.color = isError ? '#ff6666' : 'var(--green)';
+        el.classList.add('show');
+        setTimeout(() => el.classList.remove('show'), 3500);
+    }
+
+    async function loadConfessions() {
+        const wall = document.getElementById('wall');
+        wall.innerHTML = '<div style="grid-column:1/-1;padding:24px;color:var(--cream-dim);font-style:italic;font-size:13px;">loading confessions...</div>';
+
+        try {
+            const q = query(confessionsRef, orderBy('created_at', 'desc'), limit(200));
+            const snap = await getDocs(q);
+            const data = snap.docs.map(d => d.data());
+
+            wall.innerHTML = '';
+            totalCount = data.length;
+            setWallCount(totalCount);
+            data.forEach(c => wall.appendChild(makeCard(c, false)));
+        } catch (err) {
+            wall.innerHTML = '<div style="grid-column:1/-1;padding:24px;color:#ff6666;font-size:13px;">could not load confessions.</div>';
+        }
+    }
+
+    async function submitConfession() {
+        const text = document.getElementById('confessionText').value.trim();
+        if (!text || text.length > 200) return;
+
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.textContent = 'confessing...';
+
+        const word = VALID_WORDS.includes(selectedWord) ? selectedWord : null;
+
+        try {
+            await addDoc(confessionsRef, { text, word, created_at: serverTimestamp() });
+        } catch (err) {
+            btn.disabled = false;
+            btn.textContent = 'confess';
+            showStatus('something went wrong. try again.', true);
+            return;
+        }
+
+        btn.disabled = false;
+        btn.textContent = 'confess';
+
+        const wall = document.getElementById('wall');
+        wall.insertBefore(makeCard({ text, word }, true), wall.firstChild);
+        totalCount++;
+        setWallCount(totalCount);
+
+        document.getElementById('confessionText').value = '';
+        document.getElementById('charCount').textContent = '200';
+        document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+        selectedWord = null;
+
+        showStatus('your confession has been received.', false);
+    }
+
+    function selectWord(el) {
+        document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+        el.classList.add('active');
+        selectedWord = el.dataset.word;
+    }
+
+    function updateCount(el) {
+        document.getElementById('charCount').textContent = 200 - el.value.length;
+    }
+
+    // Module scripts don't expose top-level functions globally, but the
+    // markup above wires these up via inline onclick/oninput attributes.
+    window.selectWord = selectWord;
+    window.updateCount = updateCount;
+    window.submitConfession = submitConfession;
+
+    loadConfessions();
+</script>
+
+<script>
+    (function () {
+        const audio = document.getElementById('bgAudio');
+        const toggle = document.getElementById('audioToggle');
+        let unlocked = false;
+
+        function updateIcon() {
+            toggle.classList.toggle('playing', !audio.muted && !audio.paused);
+        }
+
+        audio.muted = true;
+        audio.play().catch(() => {});
+        updateIcon();
+
+        function unlockOnFirstInteraction() {
+            if (unlocked) return;
+            unlocked = true;
+            audio.muted = false;
+            audio.play().catch(() => {});
+            updateIcon();
+            document.removeEventListener('click', unlockOnFirstInteraction);
+            document.removeEventListener('touchstart', unlockOnFirstInteraction);
+            document.removeEventListener('keydown', unlockOnFirstInteraction);
+        }
+        document.addEventListener('click', unlockOnFirstInteraction);
+        document.addEventListener('touchstart', unlockOnFirstInteraction);
+        document.addEventListener('keydown', unlockOnFirstInteraction);
+
+        toggle.addEventListener('click', () => {
+            if (audio.muted || audio.paused) {
+                audio.muted = false;
+                audio.play().catch(() => {});
+            } else {
+                audio.muted = true;
+            }
+            updateIcon();
+        });
+    })();
+</script>
+</body>
+</html>
