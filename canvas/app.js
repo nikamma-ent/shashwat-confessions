@@ -246,6 +246,118 @@ function drawGridLines(w, h) {
     vctx.stroke();
 }
 
+// ─── momentum panning — release a drag and it glides to a stop, instead
+// of dead-stopping the instant the pointer lifts. Same feel as flicking
+// a real map. Velocity is a decaying blend of recent per-move deltas
+// (not just the last one), so a jittery final frame right before release
+// doesn't wreck the throw. ───────────────────────────────────────────────
+const PAN_FRICTION = 0.94;          // velocity multiplier applied every animation frame
+const PAN_MOMENTUM_STOP = 0.05;     // px/frame below which the glide ends
+const PAN_MOMENTUM_MAX = 60;        // px/frame cap, so a huge delta (e.g. a laggy frame) can't launch a wild throw
+
+let panVelX = 0;
+let panVelY = 0;
+let lastPanMoveTime = 0;
+let momentumId = null;
+
+function stopMomentum() {
+    if (momentumId) {
+        cancelAnimationFrame(momentumId);
+        momentumId = null;
+    }
+}
+
+function panBegin() {
+    stopMomentum();
+    panVelX = 0;
+    panVelY = 0;
+    lastPanMoveTime = performance.now();
+}
+
+function panMove(dx, dy) {
+    camera.x += dx;
+    camera.y += dy;
+    const now = performance.now();
+    const dt = Math.max(1, now - lastPanMoveTime); // ms
+    const instVelX = (dx / dt) * 16.67; // normalize to px/frame @ 60fps
+    const instVelY = (dy / dt) * 16.67;
+    panVelX = panVelX * 0.7 + instVelX * 0.3;
+    panVelY = panVelY * 0.7 + instVelY * 0.3;
+    lastPanMoveTime = now;
+    scheduleDraw();
+}
+
+function panEnd() {
+    let vx = Math.max(-PAN_MOMENTUM_MAX, Math.min(PAN_MOMENTUM_MAX, panVelX));
+    let vy = Math.max(-PAN_MOMENTUM_MAX, Math.min(PAN_MOMENTUM_MAX, panVelY));
+    if (Math.hypot(vx, vy) < PAN_MOMENTUM_STOP) return;
+    function frame() {
+        camera.x += vx;
+        camera.y += vy;
+        vx *= PAN_FRICTION;
+        vy *= PAN_FRICTION;
+        scheduleDraw();
+        momentumId = Math.hypot(vx, vy) > PAN_MOMENTUM_STOP ? requestAnimationFrame(frame) : null;
+    }
+    momentumId = requestAnimationFrame(frame);
+}
+
+// ─── eased zoom — the +/−/fit controls animate to their target instead
+// of snapping, same as clicking a map app's zoom buttons. Wheel/pinch
+// stay immediate since they already update continuously per input event.
+const ZOOM_ANIM_MS = 220;
+
+function animate(durationMs, onFrame) {
+    const start = performance.now();
+    function step(now) {
+        const raw = Math.min(1, (now - start) / durationMs);
+        const eased = 1 - Math.pow(1 - raw, 3); // ease-out cubic
+        onFrame(eased);
+        if (raw < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+}
+
+function smoothZoomAt(sx, sy, factor) {
+    stopMomentum();
+    const startZoom = camera.zoom;
+    const targetZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, startZoom * factor));
+    const before = screenToWorld(sx, sy);
+    animate(ZOOM_ANIM_MS, (t) => {
+        camera.zoom = startZoom + (targetZoom - startZoom) * t;
+        camera.x = sx - before.x * camera.zoom;
+        camera.y = sy - before.y * camera.zoom;
+        scheduleDraw();
+    });
+}
+
+function smoothFitToScreen() {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    if (w === 0 || h === 0) return;
+    stopMomentum();
+    const targetZoom = (Math.min(w, h) / GRID_SIZE) * 0.9;
+    const targetX = (w - GRID_SIZE * targetZoom) / 2;
+    const targetY = (h - GRID_SIZE * targetZoom) / 2;
+
+    // The board wraps and pans are unclamped, so after a long session
+    // camera.x/y could be numerically far from the target while looking
+    // visually identical to a much closer position. Re-anchor to the
+    // nearest wrapped equivalent first so the animation travels a short,
+    // clean distance instead of visibly racing across many tile copies.
+    const tile = GRID_SIZE * camera.zoom;
+    const startX = camera.x + Math.round((targetX - camera.x) / tile) * tile;
+    const startY = camera.y + Math.round((targetY - camera.y) / tile) * tile;
+    const startZoom = camera.zoom;
+
+    animate(ZOOM_ANIM_MS, (t) => {
+        camera.zoom = startZoom + (targetZoom - startZoom) * t;
+        camera.x = startX + (targetX - startX) * t;
+        camera.y = startY + (targetY - startY) * t;
+        scheduleDraw();
+    });
+}
+
 // ─── painting ──────────────────────────────────────────────────────────
 // A drag paints every cell it crosses, not just where it started — like
 // a brush, not a stamp. lastPaintedCell dedupes so holding still (or
@@ -293,6 +405,7 @@ function startPan(x, y) {
     panning = true;
     lastX = x;
     lastY = y;
+    panBegin();
     viewEl.classList.add('is-grabbing');
 }
 
@@ -300,6 +413,7 @@ viewEl.addEventListener('mousedown', (e) => {
     if (e.button === 2 || (e.button === 0 && inputMode === 'move')) {
         startPan(e.clientX, e.clientY);
     } else if (e.button === 0) {
+        stopMomentum();
         painting = true;
         lastPaintedCell = null;
         paintAt(e.clientX, e.clientY);
@@ -307,13 +421,9 @@ viewEl.addEventListener('mousedown', (e) => {
 });
 window.addEventListener('mousemove', (e) => {
     if (panning) {
-        const dx = e.clientX - lastX;
-        const dy = e.clientY - lastY;
-        camera.x += dx;
-        camera.y += dy;
+        panMove(e.clientX - lastX, e.clientY - lastY);
         lastX = e.clientX;
         lastY = e.clientY;
-        scheduleDraw();
     } else if (painting) {
         paintAt(e.clientX, e.clientY);
     }
@@ -322,9 +432,17 @@ window.addEventListener('mouseup', () => {
     if (panning) {
         panning = false;
         viewEl.classList.remove('is-grabbing');
+        panEnd();
     }
     painting = false;
     lastPaintedCell = null;
+});
+
+// Double-click zooms in on the clicked point, animated — same shortcut
+// as most map apps. Only in Move mode: in Paint mode a quick double-click
+// is a normal way to touch up two pixels, and shouldn't also yank the view.
+viewEl.addEventListener('dblclick', (e) => {
+    if (inputMode === 'move') smoothZoomAt(e.clientX, e.clientY, 1.8);
 });
 
 // ─── input: touch — one finger follows the move/paint toggle; two
@@ -335,10 +453,12 @@ function touchMid(a, b) { return { x: (a.clientX + b.clientX) / 2, y: (a.clientY
 
 let touchState = null;
 viewEl.addEventListener('touchstart', (e) => {
+    stopMomentum();
     if (e.touches.length === 1) {
         const t = e.touches[0];
         if (inputMode === 'move') {
             touchState = { mode: 'pan1', lastX: t.clientX, lastY: t.clientY };
+            panBegin();
         } else {
             lastPaintedCell = null;
             paintAt(t.clientX, t.clientY);
@@ -364,11 +484,9 @@ viewEl.addEventListener('touchmove', (e) => {
         paintAt(t.clientX, t.clientY);
     } else if (touchState.mode === 'pan1' && e.touches.length === 1) {
         const t = e.touches[0];
-        camera.x += t.clientX - touchState.lastX;
-        camera.y += t.clientY - touchState.lastY;
+        panMove(t.clientX - touchState.lastX, t.clientY - touchState.lastY);
         touchState.lastX = t.clientX;
         touchState.lastY = t.clientY;
-        scheduleDraw();
     } else if (touchState.mode === 'pan-zoom' && e.touches.length === 2) {
         const [a, b] = e.touches;
         const mid = touchMid(a, b);
@@ -381,21 +499,19 @@ viewEl.addEventListener('touchmove', (e) => {
 }, { passive: false });
 
 viewEl.addEventListener('touchend', () => {
+    if (touchState && touchState.mode === 'pan1') panEnd();
     touchState = null;
     lastPaintedCell = null;
 });
 
 // ─── zoom buttons ─────────────────────────────────────────────────────
 document.getElementById('zoomIn').addEventListener('click', () => {
-    zoomAt(window.innerWidth / 2, window.innerHeight / 2, 1.5);
+    smoothZoomAt(window.innerWidth / 2, window.innerHeight / 2, 1.5);
 });
 document.getElementById('zoomOut').addEventListener('click', () => {
-    zoomAt(window.innerWidth / 2, window.innerHeight / 2, 1 / 1.5);
+    smoothZoomAt(window.innerWidth / 2, window.innerHeight / 2, 1 / 1.5);
 });
-document.getElementById('zoomReset').addEventListener('click', () => {
-    fitToScreen();
-    scheduleDraw();
-});
+document.getElementById('zoomReset').addEventListener('click', smoothFitToScreen);
 
 // Handles both real window resizes and the viewport going from 0×0 (not
 // yet composited/visible) to a real size without ever firing a 'resize'
