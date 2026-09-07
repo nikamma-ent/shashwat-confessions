@@ -73,6 +73,13 @@ let activeColor = 0;
 let currentSlug = null;
 let unsubscribeCurrent = null;
 
+// 'paint' (default) makes the primary drag (left mouse / one finger)
+// paint a stroke; 'move' makes it pan instead. Right-click-drag and
+// two-finger-drag always pan regardless of this — the toggle is only
+// about what the *primary* input does, for people who'd rather not
+// remember a secondary gesture.
+let inputMode = 'paint';
+
 const camera = { x: 0, y: 0, zoom: 1 };
 let baseZoom = 1;
 
@@ -91,6 +98,22 @@ PALETTE.forEach((hex, i) => {
     });
     paletteEl.appendChild(btn);
 });
+
+// ─── mode toggle: move vs. paint ─────────────────────────────────────
+const modeMoveBtn = document.getElementById('modeMove');
+const modePaintBtn = document.getElementById('modePaint');
+
+function setMode(mode) {
+    inputMode = mode;
+    modeMoveBtn.classList.toggle('is-active', mode === 'move');
+    modeMoveBtn.setAttribute('aria-checked', String(mode === 'move'));
+    modePaintBtn.classList.toggle('is-active', mode === 'paint');
+    modePaintBtn.setAttribute('aria-checked', String(mode === 'paint'));
+    viewEl.style.cursor = mode === 'move' ? 'grab' : 'crosshair';
+}
+
+modeMoveBtn.addEventListener('click', () => setMode('move'));
+modePaintBtn.addEventListener('click', () => setMode('paint'));
 
 // ─── question dropdown ──────────────────────────────────────────────
 Object.values(QUESTIONS).forEach((q) => {
@@ -250,8 +273,9 @@ viewEl.addEventListener('wheel', (e) => {
     zoomAt(e.clientX, e.clientY, factor);
 }, { passive: false });
 
-// ─── input: mouse — left button drags to paint, right button drags to
-// pan (dedicated pan input, since left-drag now paints a stroke) ───────
+// ─── input: mouse — primary (left) button follows the move/paint
+// toggle; right button always pans regardless of it, as a fixed
+// power-user shortcut for people who don't want to touch the toggle ───
 viewEl.addEventListener('contextmenu', (e) => e.preventDefault());
 
 let painting = false;
@@ -259,12 +283,16 @@ let panning = false;
 let lastX = 0;
 let lastY = 0;
 
+function startPan(x, y) {
+    panning = true;
+    lastX = x;
+    lastY = y;
+    viewEl.classList.add('is-grabbing');
+}
+
 viewEl.addEventListener('mousedown', (e) => {
-    if (e.button === 2) {
-        panning = true;
-        lastX = e.clientX;
-        lastY = e.clientY;
-        viewEl.classList.add('is-grabbing');
+    if (e.button === 2 || (e.button === 0 && inputMode === 'move')) {
+        startPan(e.clientX, e.clientY);
     } else if (e.button === 0) {
         painting = true;
         lastPaintedCell = null;
@@ -285,28 +313,32 @@ window.addEventListener('mousemove', (e) => {
         paintAt(e.clientX, e.clientY);
     }
 });
-window.addEventListener('mouseup', (e) => {
-    if (e.button === 2) {
+window.addEventListener('mouseup', () => {
+    if (panning) {
         panning = false;
         viewEl.classList.remove('is-grabbing');
-    } else if (e.button === 0) {
-        painting = false;
-        lastPaintedCell = null;
     }
+    painting = false;
+    lastPaintedCell = null;
 });
 
-// ─── input: touch — one finger drags to paint a stroke, two fingers pan
-// and pinch-zoom together (same combined gesture as a map app) ─────────
+// ─── input: touch — one finger follows the move/paint toggle; two
+// fingers always pan and pinch-zoom together (same combined gesture as
+// a map app), regardless of the toggle ─────────────────────────────────
 function touchDist(a, b) { return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY); }
 function touchMid(a, b) { return { x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 }; }
 
 let touchState = null;
 viewEl.addEventListener('touchstart', (e) => {
     if (e.touches.length === 1) {
-        lastPaintedCell = null;
         const t = e.touches[0];
-        paintAt(t.clientX, t.clientY);
-        touchState = { mode: 'paint' };
+        if (inputMode === 'move') {
+            touchState = { mode: 'pan1', lastX: t.clientX, lastY: t.clientY };
+        } else {
+            lastPaintedCell = null;
+            paintAt(t.clientX, t.clientY);
+            touchState = { mode: 'paint' };
+        }
     } else if (e.touches.length === 2) {
         const [a, b] = e.touches;
         const mid = touchMid(a, b);
@@ -325,6 +357,14 @@ viewEl.addEventListener('touchmove', (e) => {
     if (touchState.mode === 'paint' && e.touches.length === 1) {
         const t = e.touches[0];
         paintAt(t.clientX, t.clientY);
+    } else if (touchState.mode === 'pan1' && e.touches.length === 1) {
+        const t = e.touches[0];
+        camera.x += t.clientX - touchState.lastX;
+        camera.y += t.clientY - touchState.lastY;
+        touchState.lastX = t.clientX;
+        touchState.lastY = t.clientY;
+        clampCamera();
+        scheduleDraw();
     } else if (touchState.mode === 'pan-zoom' && e.touches.length === 2) {
         const [a, b] = e.touches;
         const mid = touchMid(a, b);
@@ -397,7 +437,7 @@ async function loadQuestion(slug) {
     gctx.fillStyle = '#2a0000';
     gctx.fillRect(0, 0, GRID_SIZE, GRID_SIZE);
     statsEl.textContent = '';
-    placeStatusEl.textContent = 'drag to paint · right-click drag (or two fingers) to pan';
+    placeStatusEl.textContent = 'drag to paint, or switch to move · right-click drag (or two fingers) always pans';
     placeStatusEl.classList.remove('is-error');
 
     appEl.classList.add('is-loading');
@@ -434,6 +474,7 @@ async function loadQuestion(slug) {
 }
 
 // ─── boot ──────────────────────────────────────────────────────────────
+setMode('paint');
 resizeViewport();
 
 const requested = new URLSearchParams(location.search).get('q');

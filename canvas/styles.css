@@ -195,6 +195,40 @@ body::before {
     font-size: 14px;
 }
 
+/* ── MODE TOGGLE ──────────────────────────────── */
+.mode-toggle {
+    position: absolute;
+    top: 72px;
+    left: 16px;
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 14px;
+    z-index: 5;
+}
+
+.mode-btn {
+    padding: 8px 14px;
+    border-radius: 10px;
+    background: transparent;
+    border: none;
+    color: var(--cream-dim);
+    font-family: 'Migra', serif;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.mode-btn:hover {
+    color: var(--cream);
+}
+
+.mode-btn.is-active {
+    background: rgba(0, 170, 0, 0.3);
+    color: var(--cream);
+}
+
 /* ── BOTTOM BAR ───────────────────────────────── */
 .bottombar {
     position: absolute;
