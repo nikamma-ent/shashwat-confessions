@@ -22,18 +22,34 @@ const firebaseConfig = {
 // Grid is GRID_SIZE × GRID_SIZE cells. Firestore documents cap out around
 // 1MB, so a grid this size can't live in one doc if fully painted — it's
 // split into CHUNK_SIZE × CHUNK_SIZE tiles, each its own document (see
-// makeFirestoreBackend below and firestore.rules). Bumping GRID_SIZE just
-// creates more chunk documents, not bigger ones, so it scales freely;
-// CHUNK_SIZE rarely needs to change.
-const GRID_SIZE = 256;
-const CHUNK_SIZE = 32;
+// makeFirestoreBackend below and firestore.rules). CHUNKS_PER_SIDE (and so
+// the number of live Firestore listeners) stays fixed at 8 as long as
+// GRID_SIZE and CHUNK_SIZE grow together — that's the knob to turn for a
+// bigger board without subscribing to more chunk documents.
+//
+// Changing either of these is a breaking change to already-written pixel
+// data — a chunk's local coordinates are only meaningful for the
+// CHUNK_SIZE that wrote them. Existing chunk documents from a previous
+// size need clearing out in the Firestore console (canvases/<question>/
+// chunks) after a resize, or old pixels render scattered into the wrong
+// spots instead of just disappearing cleanly.
+const GRID_SIZE = 512;
+const CHUNK_SIZE = 64;
 const CHUNKS_PER_SIDE = GRID_SIZE / CHUNK_SIZE;
 
-const MAX_ZOOM = 28;  // on-screen px per cell, at max zoom-in
-const MIN_ZOOM = 0.5; // on-screen px per cell, at max zoom-out — purely a
-                       // performance floor (how many tiled copies get drawn
-                       // per frame), not a boundary; the board itself wraps
-                       // seamlessly and has no edge to restrict panning at
+const MAX_ZOOM = 28; // on-screen px per cell, at max zoom-in
+
+// On-screen px per cell, at max zoom-out — computed fresh from the current
+// viewport rather than a fixed constant. The board wraps seamlessly during
+// a *pan*, but zooming out far enough to fit more than one board-width on
+// screen at once would show that wrap as multiple simultaneous copies
+// tiled side by side, which reads as a repeating wallpaper rather than a
+// single looping world. Keeping min zoom at "exactly fills the viewport"
+// makes that impossible — you can still pan forever and loop around, you
+// just can never zoom out past seeing one copy at a time.
+function minZoom() {
+    return (Math.max(window.innerWidth, window.innerHeight) / GRID_SIZE) * 1.02;
+}
 
 // Endesga 32 — a free, widely-used 32-color pixel art palette. Wide hue
 // and shade range, still small enough to keep pixel data compact (one
@@ -150,10 +166,16 @@ function fitToScreen() {
     const w = window.innerWidth;
     const h = window.innerHeight;
     if (w === 0 || h === 0) return;
-    const zoom = (Math.min(w, h) / GRID_SIZE) * 0.9;
-    camera.zoom = zoom;
-    camera.x = (w - GRID_SIZE * zoom) / 2;
-    camera.y = (h - GRID_SIZE * zoom) / 2;
+    // Deliberately the same value as minZoom(), not a separate "leave a
+    // margin" calculation — using Math.min(w,h) with a margin (the old
+    // approach) letterboxes on non-square viewports, and that empty
+    // margin is exactly where a second wrapped copy would peek into view.
+    // Filling the viewport completely (covering, not containing) is what
+    // keeps the *default* view — not just the zoomed-out floor — free of
+    // visible repeats.
+    camera.zoom = minZoom();
+    camera.x = (w - GRID_SIZE * camera.zoom) / 2;
+    camera.y = (h - GRID_SIZE * camera.zoom) / 2;
 }
 
 // The board has no edges — panning past one side brings the other side
@@ -176,7 +198,7 @@ function screenToWorld(sx, sy) {
 
 function zoomAt(sx, sy, factor) {
     const before = screenToWorld(sx, sy);
-    camera.zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, camera.zoom * factor));
+    camera.zoom = Math.min(MAX_ZOOM, Math.max(minZoom(), camera.zoom * factor));
     camera.x = sx - before.x * camera.zoom;
     camera.y = sy - before.y * camera.zoom;
     scheduleDraw();
@@ -321,7 +343,7 @@ function animate(durationMs, onFrame) {
 function smoothZoomAt(sx, sy, factor) {
     stopMomentum();
     const startZoom = camera.zoom;
-    const targetZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, startZoom * factor));
+    const targetZoom = Math.min(MAX_ZOOM, Math.max(minZoom(), startZoom * factor));
     const before = screenToWorld(sx, sy);
     animate(ZOOM_ANIM_MS, (t) => {
         camera.zoom = startZoom + (targetZoom - startZoom) * t;
@@ -336,7 +358,7 @@ function smoothFitToScreen() {
     const h = window.innerHeight;
     if (w === 0 || h === 0) return;
     stopMomentum();
-    const targetZoom = (Math.min(w, h) / GRID_SIZE) * 0.9;
+    const targetZoom = minZoom(); // same "fill the viewport, no repeats" target as fitToScreen()
     const targetX = (w - GRID_SIZE * targetZoom) / 2;
     const targetY = (h - GRID_SIZE * targetZoom) / 2;
 
@@ -491,7 +513,7 @@ viewEl.addEventListener('touchmove', (e) => {
         const [a, b] = e.touches;
         const mid = touchMid(a, b);
         const factor = touchDist(a, b) / touchState.startDist;
-        camera.zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, touchState.startZoom * factor));
+        camera.zoom = Math.min(MAX_ZOOM, Math.max(minZoom(), touchState.startZoom * factor));
         camera.x = mid.x - touchState.anchorWorld.x * camera.zoom;
         camera.y = mid.y - touchState.anchorWorld.y * camera.zoom;
         scheduleDraw();
@@ -525,6 +547,12 @@ function handleViewportChange() {
     if (!hasFitOnce) {
         hasFitOnce = true;
         fitToScreen();
+    } else {
+        // minZoom() depends on viewport size — a resize (rotating a phone,
+        // resizing a window) can leave the current zoom below the new
+        // floor, which would let a second copy of the board peek into
+        // view. Only raises zoom when needed; never lowers it.
+        camera.zoom = Math.max(camera.zoom, minZoom());
     }
     scheduleDraw();
 }
