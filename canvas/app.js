@@ -29,8 +29,11 @@ const GRID_SIZE = 256;
 const CHUNK_SIZE = 32;
 const CHUNKS_PER_SIDE = GRID_SIZE / CHUNK_SIZE;
 
-const MAX_ZOOM = 28;       // on-screen px per cell, at max zoom-in
-const MIN_ZOOM_FACTOR = 0.55; // how far below "fit to screen" you can zoom out
+const MAX_ZOOM = 28;  // on-screen px per cell, at max zoom-in
+const MIN_ZOOM = 0.5; // on-screen px per cell, at max zoom-out — purely a
+                       // performance floor (how many tiled copies get drawn
+                       // per frame), not a boundary; the board itself wraps
+                       // seamlessly and has no edge to restrict panning at
 
 // Endesga 32 — a free, widely-used 32-color pixel art palette. Wide hue
 // and shade range, still small enough to keep pixel data compact (one
@@ -81,7 +84,6 @@ let unsubscribeCurrent = null;
 let inputMode = 'paint';
 
 const camera = { x: 0, y: 0, zoom: 1 };
-let baseZoom = 1;
 
 // ─── palette UI (built once — color choice persists across question
 // switches, same as a real toolbox) ──────────────────────────────────
@@ -150,34 +152,33 @@ function fitToScreen() {
     if (w === 0 || h === 0) return;
     const zoom = (Math.min(w, h) / GRID_SIZE) * 0.9;
     camera.zoom = zoom;
-    baseZoom = zoom;
     camera.x = (w - GRID_SIZE * zoom) / 2;
     camera.y = (h - GRID_SIZE * zoom) / 2;
-    clampCamera();
 }
 
-function minZoom() { return baseZoom * MIN_ZOOM_FACTOR; }
-
-function clampCamera() {
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    const gridW = GRID_SIZE * camera.zoom;
-    const gridH = GRID_SIZE * camera.zoom;
-    const margin = 80; // px of the grid always kept on-screen
-    camera.x = Math.min(w - margin, Math.max(margin - gridW, camera.x));
-    camera.y = Math.min(h - margin, Math.max(margin - gridH, camera.y));
-}
+// The board has no edges — panning past one side brings the other side
+// back into view, like a world map wrapping at the antimeridian. camera.x
+// and camera.y are left completely unclamped (pan forever, either
+// direction); wrapping only happens where it actually matters: mapping a
+// screen point back to a cell (screenToWorld) and tiling the grid texture
+// across the viewport for rendering (draw/drawGridLines). period() finds
+// the on-screen position of the tile copy nearest to (at or before) 0,
+// for a given repeat length in screen px — the starting point for tiling.
+function wrap(value, size) { return ((value % size) + size) % size; }
+function period(originPx, lengthPx) { return originPx - Math.floor(originPx / lengthPx) * lengthPx - lengthPx; }
 
 function screenToWorld(sx, sy) {
-    return { x: (sx - camera.x) / camera.zoom, y: (sy - camera.y) / camera.zoom };
+    return {
+        x: wrap((sx - camera.x) / camera.zoom, GRID_SIZE),
+        y: wrap((sy - camera.y) / camera.zoom, GRID_SIZE)
+    };
 }
 
 function zoomAt(sx, sy, factor) {
     const before = screenToWorld(sx, sy);
-    camera.zoom = Math.min(MAX_ZOOM, Math.max(minZoom(), camera.zoom * factor));
+    camera.zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, camera.zoom * factor));
     camera.x = sx - before.x * camera.zoom;
     camera.y = sy - before.y * camera.zoom;
-    clampCamera();
     scheduleDraw();
 }
 
@@ -194,17 +195,29 @@ function draw() {
     vctx.clearRect(0, 0, w, h);
     vctx.fillStyle = '#2a0000';
     vctx.fillRect(0, 0, w, h);
-    vctx.drawImage(
-        gridCanvas, 0, 0, GRID_SIZE, GRID_SIZE,
-        camera.x, camera.y, GRID_SIZE * camera.zoom, GRID_SIZE * camera.zoom
-    );
+
+    const tile = GRID_SIZE * camera.zoom;
+    const originX = period(camera.x, tile);
+    const originY = period(camera.y, tile);
+    const cols = Math.ceil((w - originX) / tile) + 1;
+    const rows = Math.ceil((h - originY) / tile) + 1;
+
+    for (let ry = 0; ry < rows; ry++) {
+        for (let rx = 0; rx < cols; rx++) {
+            vctx.drawImage(
+                gridCanvas, 0, 0, GRID_SIZE, GRID_SIZE,
+                originX + rx * tile, originY + ry * tile, tile, tile
+            );
+        }
+    }
+
     drawGridLines(w, h);
 }
 
 // Cell borders — only worth showing once a cell is big enough on screen
 // to actually paint precisely into; at fit-to-screen zoom (a handful of
-// px per cell) 256 lines in each direction would just be moiré noise.
-// Fades in over a small zoom range instead of popping in suddenly.
+// px per cell) hundreds of lines would just be moiré noise. Fades in
+// over a small zoom range instead of popping in suddenly.
 const GRID_LINE_FADE_START = 6;  // px/cell — lines start appearing
 const GRID_LINE_FADE_END = 12;   // px/cell — lines fully opaque
 
@@ -213,29 +226,22 @@ function drawGridLines(w, h) {
     if (zoom < GRID_LINE_FADE_START) return;
     const alpha = Math.min(1, (zoom - GRID_LINE_FADE_START) / (GRID_LINE_FADE_END - GRID_LINE_FADE_START));
 
-    // Only the lines actually on-screen, clamped to the grid's own edges.
-    const startX = Math.max(0, Math.floor((0 - camera.x) / zoom));
-    const endX = Math.min(GRID_SIZE, Math.ceil((w - camera.x) / zoom));
-    const startY = Math.max(0, Math.floor((0 - camera.y) / zoom));
-    const endY = Math.min(GRID_SIZE, Math.ceil((h - camera.y) / zoom));
-
-    const top = Math.max(0, camera.y);
-    const bottom = Math.min(h, camera.y + GRID_SIZE * zoom);
-    const left = Math.max(0, camera.x);
-    const right = Math.min(w, camera.x + GRID_SIZE * zoom);
+    // Cell boundaries repeat every `zoom` px — same tiling idea as draw(),
+    // just at the per-cell period instead of the per-grid one, and drawn
+    // as plain lines across the whole viewport rather than per-copy.
+    const originX = period(camera.x, zoom);
+    const originY = period(camera.y, zoom);
 
     vctx.strokeStyle = `rgba(0, 0, 0, ${0.25 * alpha})`;
     vctx.lineWidth = 1;
     vctx.beginPath();
-    for (let x = startX; x <= endX; x++) {
-        const sx = camera.x + x * zoom;
-        vctx.moveTo(sx, top);
-        vctx.lineTo(sx, bottom);
+    for (let x = originX; x <= w; x += zoom) {
+        vctx.moveTo(x, 0);
+        vctx.lineTo(x, h);
     }
-    for (let y = startY; y <= endY; y++) {
-        const sy = camera.y + y * zoom;
-        vctx.moveTo(left, sy);
-        vctx.lineTo(right, sy);
+    for (let y = originY; y <= h; y += zoom) {
+        vctx.moveTo(0, y);
+        vctx.lineTo(w, y);
     }
     vctx.stroke();
 }
@@ -307,7 +313,6 @@ window.addEventListener('mousemove', (e) => {
         camera.y += dy;
         lastX = e.clientX;
         lastY = e.clientY;
-        clampCamera();
         scheduleDraw();
     } else if (painting) {
         paintAt(e.clientX, e.clientY);
@@ -363,16 +368,14 @@ viewEl.addEventListener('touchmove', (e) => {
         camera.y += t.clientY - touchState.lastY;
         touchState.lastX = t.clientX;
         touchState.lastY = t.clientY;
-        clampCamera();
         scheduleDraw();
     } else if (touchState.mode === 'pan-zoom' && e.touches.length === 2) {
         const [a, b] = e.touches;
         const mid = touchMid(a, b);
         const factor = touchDist(a, b) / touchState.startDist;
-        camera.zoom = Math.min(MAX_ZOOM, Math.max(minZoom(), touchState.startZoom * factor));
+        camera.zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, touchState.startZoom * factor));
         camera.x = mid.x - touchState.anchorWorld.x * camera.zoom;
         camera.y = mid.y - touchState.anchorWorld.y * camera.zoom;
-        clampCamera();
         scheduleDraw();
     }
 }, { passive: false });
@@ -406,8 +409,6 @@ function handleViewportChange() {
     if (!hasFitOnce) {
         hasFitOnce = true;
         fitToScreen();
-    } else {
-        clampCamera();
     }
     scheduleDraw();
 }
