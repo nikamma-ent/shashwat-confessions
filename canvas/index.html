@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pinocchio — Canvas</title>
+    <meta name="description" content="A community pixel canvas. Three questions, drawn one pixel at a time.">
+
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Pinocchio — Canvas">
+    <meta property="og:description" content="A community pixel canvas. Three questions, drawn one pixel at a time.">
+    <meta property="og:image" content="images/pinocchio-typography.png">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Pinocchio — Canvas">
+    <meta name="twitter:description" content="A community pixel canvas. Three questions, drawn one pixel at a time.">
+
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="app">
+    <canvas id="pixelCanvas"></canvas>
+    <div class="canvas-status" id="canvasStatus"></div>
+
+    <header class="topbar">
+        <img class="topbar__logo" src="images/pinocchio-typography.png" alt="Pinocchio">
+        <select id="questionSelect" class="glass-panel question-select" aria-label="Choose a question"></select>
+    </header>
+
+    <div class="zoom-controls">
+        <button id="zoomIn" class="glass-panel" type="button" aria-label="Zoom in">+</button>
+        <button id="zoomOut" class="glass-panel" type="button" aria-label="Zoom out">−</button>
+        <button id="zoomReset" class="glass-panel" type="button" aria-label="Fit to screen">⤢</button>
+    </div>
+
+    <footer class="bottombar">
+        <div class="glass-panel palette-panel">
+            <div class="palette" id="palette"></div>
+            <div class="bottombar__meta">
+                <p class="place-status" id="placeStatus">loading canvas...</p>
+                <p class="stats" id="stats"></p>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
