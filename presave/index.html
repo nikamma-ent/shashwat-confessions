@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pinocchio — Shashwat Bulusu</title>
+<meta name="description" content="Pinocchio Out on August 21st. Pre-Save Now!">
+<link rel="icon" type="image/png" href="assets/logo.png">
+<link rel="stylesheet" href="styles.css">
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-VDC1Y7K7Q9"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-VDC1Y7K7Q9');
+</script>
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pinocchio.shashwatbulusu.xyz/presave">
+<meta property="og:title" content="Pinocchio — Shashwat Bulusu">
+<meta property="og:description" content="Pinocchio Out on August 21st. Pre-Save Now!">
+<meta property="og:image" content="https://pinocchio.shashwatbulusu.xyz/presave/assets/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Pinocchio — Shashwat Bulusu">
+<meta name="twitter:description" content="Pinocchio Out on August 21st. Pre-Save Now!">
+<meta name="twitter:image" content="https://pinocchio.shashwatbulusu.xyz/presave/assets/og-image.jpg">
+</head>
+<body>
+
+  <main class="page">
+    <header class="header">
+      <img class="title-logo" src="assets/logo.png" alt="Pinocchio">
+    </header>
+
+    <div class="portrait" id="portrait">
+      <img class="portrait__base" src="assets/pinocchio_base.png" alt="Hand-drawn portrait of the Pinocchio artwork">
+      <img class="portrait__caption" id="portraitCaption" src="assets/pinocchio_caption.png" alt="Caption reading 'I just lied'">
+    </div>
+
+    <section class="counter" aria-live="polite">
+      <p class="counter__number" id="counterNumber">—</p>
+      <p class="counter__label">pre-saves &amp; counting</p>
+    </section>
+
+    <button class="presave-btn" id="presaveBtn" type="button">
+      Pre-Save To Make My Nose Grow
+    </button>
+
+    <a class="preorder-btn" href="https://shashwatbulusu.bandcamp.com/album/pinocchio" target="_blank" rel="noopener noreferrer">
+      Pre-Order
+    </a>
+
+    <nav class="socials" aria-label="Shashwat Bulusu on social media">
+      <a href="https://www.instagram.com/bullu.frog" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+        <img src="assets/icon-instagram.png" alt="">
+      </a>
+      <a href="https://open.spotify.com/artist/0OxO7c4K0ozx5CTPDhFOXO?si=1eIFwlbdQ8-DN0rZXD3m_Q&amp;utm_source=copy-link" target="_blank" rel="noopener noreferrer" aria-label="Spotify">
+        <img src="assets/icon-spotify.png" alt="">
+      </a>
+      <a href="https://music.apple.com/in/artist/shashwat-bulusu/1457492073" target="_blank" rel="noopener noreferrer" aria-label="Apple Music">
+        <img src="assets/icon-applemusic.png" alt="">
+      </a>
+      <a href="https://youtube.com/@shashwatbulusu?si=FrGRzoYkyCvLcR8K" target="_blank" rel="noopener noreferrer" aria-label="YouTube">
+        <img src="assets/icon-youtube.png" alt="">
+      </a>
+      <a href="https://shashwatbulusu.bandcamp.com/music" target="_blank" rel="noopener noreferrer" aria-label="Bandcamp">
+        <img src="assets/icon-bandcamp.png" alt="">
+      </a>
+    </nav>
+  </main>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button class="modal__close" id="modalClose" type="button" aria-label="Close">&times;</button>
+      <p class="modal__title" id="modalTitle">Pre-Save on</p>
+      <a class="modal__option" id="modalSpotify" href="https://open.spotify.com/album/4C6Cgfuc0ZjnEMV76tnyUK?si=6dbf057bf866456a" target="_blank" rel="noopener noreferrer">
+        <img src="assets/icon-spotify.png" alt="">
+        Spotify
+      </a>
+      <a class="modal__option" id="modalAppleMusic" href="https://music.apple.com/in/album/pinocchio/6780266243" target="_blank" rel="noopener noreferrer">
+        <img src="assets/icon-applemusic.png" alt="">
+        Apple Music
+      </a>
+    </div>
+  </div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
