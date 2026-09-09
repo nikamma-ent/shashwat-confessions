@@ -205,6 +205,7 @@ body::before {
     top: 72px;
     left: 16px;
     display: flex;
+    flex-direction: column;
     gap: 4px;
     padding: 4px;
     border-radius: 14px;
@@ -212,7 +213,8 @@ body::before {
 }
 
 .mode-btn {
-    padding: 8px 14px;
+    width: 64px;
+    padding: 8px 0;
     border-radius: 10px;
     background: transparent;
     border: none;
