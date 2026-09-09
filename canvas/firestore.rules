@@ -1,0 +1,50 @@
+rules_version = '2';
+
+// Firebase Console → Firestore Database → Rules → paste this in → Publish.
+//
+// The grid is split into fixed-size tiles so a big canvas never risks
+// hitting Firestore's ~1MB document cap. One document per tile, at
+// canvases/{canvasId}/chunks/{cx}_{cy}, shape:
+//   { pixels: { "lx_ly": colorIndex, ... } }
+// (lx/ly are local to the chunk, cx/cy identify which chunk). See
+// GRID_SIZE / CHUNK_SIZE in canvas.js for the actual dimensions.
+//
+// Anyone can read (the canvas is public). Writes are restricted to:
+//   - only the canvases that actually exist (no creating arbitrary docs)
+//   - touching exactly one pixel per write (no bulk-overwriting a tile)
+//   - not touching any field other than `pixels`
+//
+// Honesty note: this does NOT validate that the placed color index is
+// within the 32-color palette, and there is no rate-limiting anywhere —
+// client or server — so a script could paint arbitrarily fast. That's
+// intentional (no placement cooldown, by design), but it also means
+// there's nothing here stopping abuse beyond "one pixel per write." If
+// that becomes a problem, move writes behind a Cloud Function that can
+// actually rate-limit per client.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /canvases/{canvasId}/chunks/{chunkId} {
+      allow read: if true;
+
+      allow update: if canvasId in ['human', 'lie']
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pixels'])
+        && request.resource.data.pixels.diff(resource.data.pixels).affectedKeys().size() == 1;
+
+      // First write to a given chunk (it doesn't exist yet) — same
+      // shape requirement, just against an empty base document.
+      allow create: if canvasId in ['human', 'lie']
+        && request.resource.data.keys().hasOnly(['pixels'])
+        && request.resource.data.pixels.keys().size() == 1;
+
+      allow delete: if false;
+    }
+
+    // No top-level canvas doc is written by the app (pixel counts are
+    // derived client-side from the chunks it has loaded) — but reads are
+    // left open in case one gets added by hand later (e.g. for metadata).
+    match /canvases/{canvasId} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}
