@@ -206,11 +206,11 @@ body::before {
     font-size: 14px;
 }
 
-/* ── MODE TOGGLE — stacked under the zoom controls, same right edge ── */
+/* ── MODE TOGGLE ──────────────────────────────── */
 .mode-toggle {
     position: absolute;
-    top: 236px; /* zoom-controls' 96px top + its ~124px height + 16px gap */
-    right: 16px;
+    top: 96px; /* matches zoom-controls' top, mirrored on the left */
+    left: 16px;
     display: flex;
     flex-direction: column;
     gap: 4px;
