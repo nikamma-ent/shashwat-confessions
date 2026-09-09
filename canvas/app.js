@@ -162,20 +162,27 @@ function resizeViewport() {
     vctx.imageSmoothingEnabled = false;
 }
 
-function fitToScreen() {
+// The view a canvas actually opens on — landing on a question, or
+// switching to one. Zoomed in enough that gridlines are visible right
+// away (GRID_LINE_FADE_END is 12px/cell — this matches it exactly),
+// centered on the middle of the board. Trying it as an experiment: it
+// trades "see the whole board at a glance" for "the thing you're about
+// to paint is already legible," and it's a one-line revert (set
+// DEFAULT_ZOOM back to minZoom()) if it doesn't feel right — the
+// fit-to-screen button (smoothFitToScreen, below) still gives the full
+// overview either way. Math.max(minZoom(), ...) is a safety floor, not
+// the point of this function: on a huge viewport where minZoom() alone
+// exceeds DEFAULT_ZOOM, this just degrades to the overview rather than
+// ever going below the no-visible-repeats floor.
+const DEFAULT_ZOOM = 12;
+
+function defaultView() {
     const w = window.innerWidth;
     const h = window.innerHeight;
     if (w === 0 || h === 0) return;
-    // Deliberately the same value as minZoom(), not a separate "leave a
-    // margin" calculation — using Math.min(w,h) with a margin (the old
-    // approach) letterboxes on non-square viewports, and that empty
-    // margin is exactly where a second wrapped copy would peek into view.
-    // Filling the viewport completely (covering, not containing) is what
-    // keeps the *default* view — not just the zoomed-out floor — free of
-    // visible repeats.
-    camera.zoom = minZoom();
-    camera.x = (w - GRID_SIZE * camera.zoom) / 2;
-    camera.y = (h - GRID_SIZE * camera.zoom) / 2;
+    camera.zoom = Math.max(minZoom(), Math.min(MAX_ZOOM, DEFAULT_ZOOM));
+    camera.x = w / 2 - (GRID_SIZE / 2) * camera.zoom;
+    camera.y = h / 2 - (GRID_SIZE / 2) * camera.zoom;
 }
 
 // The board has no edges — panning past one side brings the other side
@@ -353,12 +360,19 @@ function smoothZoomAt(sx, sy, factor) {
     });
 }
 
+// The full-board overview, animated — what the "fit to screen" button
+// resets to. Targets minZoom() itself rather than a separate "leave a
+// margin" calculation — using Math.min(w,h) with a margin (the old
+// approach) letterboxes on non-square viewports, and that empty margin is
+// exactly where a second wrapped copy would peek into view. Filling the
+// viewport completely (covering, not containing) is what keeps this view
+// free of visible repeats.
 function smoothFitToScreen() {
     const w = window.innerWidth;
     const h = window.innerHeight;
     if (w === 0 || h === 0) return;
     stopMomentum();
-    const targetZoom = minZoom(); // same "fill the viewport, no repeats" target as fitToScreen()
+    const targetZoom = minZoom();
     const targetX = (w - GRID_SIZE * targetZoom) / 2;
     const targetY = (h - GRID_SIZE * targetZoom) / 2;
 
@@ -546,7 +560,7 @@ function handleViewportChange() {
     resizeViewport();
     if (!hasFitOnce) {
         hasFitOnce = true;
-        fitToScreen();
+        defaultView();
     } else {
         // minZoom() depends on viewport size — a resize (rotating a phone,
         // resizing a window) can leave the current zoom below the new
@@ -589,7 +603,7 @@ async function loadQuestion(slug) {
     appEl.classList.remove('has-error');
     statusEl.textContent = 'loading canvas...';
 
-    fitToScreen();
+    defaultView();
     scheduleDraw();
 
     currentBackend = TEST_MODE ? makeLocalBackend(slug) : makeFirestoreBackend(slug);
