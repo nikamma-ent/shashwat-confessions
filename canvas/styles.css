@@ -143,13 +143,17 @@ body::before {
     top: 16px;
     left: 50%;
     transform: translateX(-50%);
-    max-width: min(60vw, 420px);
+    max-width: min(70vw, 640px);
     color: var(--cream);
     font-family: 'Qordhion', serif;
-    font-size: 14px;
-    letter-spacing: 0.5px;
-    padding: 9px 14px;
-    border-radius: 20px;
+    /* Fixed px was fine at phone/tablet width but reads as tiny floating
+       alone at the top of a real desktop monitor — scale with viewport
+       instead, capped at both ends so it neither vanishes on a small
+       screen nor gets cartoonishly large on an ultrawide one. */
+    font-size: clamp(14px, 1.7vw, 22px);
+    letter-spacing: 0.6px;
+    padding: clamp(9px, 0.9vw, 15px) clamp(14px, 1.6vw, 26px);
+    border-radius: 24px;
     cursor: pointer;
     transition: border-color 0.15s;
 }
