@@ -596,7 +596,7 @@ async function loadQuestion(slug) {
     gctx.fillStyle = '#2a0000';
     gctx.fillRect(0, 0, GRID_SIZE, GRID_SIZE);
     statsEl.textContent = '';
-    placeStatusEl.textContent = 'drag to paint, or switch to move · right-click drag (or two fingers) always pans';
+    placeStatusEl.textContent = 'drag to pan, or switch to paint · right-click drag (or two fingers) always pans';
     placeStatusEl.classList.remove('is-error');
 
     appEl.classList.add('is-loading');
@@ -633,7 +633,7 @@ async function loadQuestion(slug) {
 }
 
 // ─── boot ──────────────────────────────────────────────────────────────
-setMode('paint');
+setMode('move');
 resizeViewport();
 
 const requested = new URLSearchParams(location.search).get('q');

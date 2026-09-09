@@ -67,7 +67,7 @@ body::before {
     height: 100%;
     image-rendering: pixelated;
     image-rendering: crisp-edges;
-    cursor: crosshair;
+    cursor: grab; /* matches the default Move mode; setMode() overrides this once app.js runs */
     touch-action: none;
     display: block;
 }
