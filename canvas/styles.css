@@ -123,7 +123,7 @@ body::before {
     align-items: center;
     justify-content: space-between;
     gap: 14px;
-    padding: 16px;
+    padding: 24px 16px;
     z-index: 5;
     pointer-events: none;
 }
@@ -133,14 +133,17 @@ body::before {
 }
 
 .topbar__logo {
-    height: 32px;
+    /* Scales with viewport the same way question-select does — was a
+       flat 32px, which read as small next to the now-bigger prompt pill
+       on a real desktop monitor. */
+    height: clamp(32px, 3.4vw, 56px);
     width: auto;
     filter: drop-shadow(0 0 20px rgba(0, 180, 0, 0.3));
 }
 
 .question-select {
     position: absolute;
-    top: 16px;
+    top: 24px;
     left: 50%;
     transform: translateX(-50%);
     max-width: min(70vw, 640px);
@@ -174,7 +177,7 @@ body::before {
 /* ── ZOOM CONTROLS ────────────────────────────── */
 .zoom-controls {
     position: absolute;
-    top: 72px;
+    top: 96px;
     right: 16px;
     display: flex;
     flex-direction: column;
@@ -203,11 +206,11 @@ body::before {
     font-size: 14px;
 }
 
-/* ── MODE TOGGLE ──────────────────────────────── */
+/* ── MODE TOGGLE — stacked under the zoom controls, same right edge ── */
 .mode-toggle {
     position: absolute;
-    top: 72px;
-    left: 16px;
+    top: 236px; /* zoom-controls' 96px top + its ~124px height + 16px gap */
+    right: 16px;
     display: flex;
     flex-direction: column;
     gap: 4px;
