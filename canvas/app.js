@@ -51,9 +51,21 @@ function minZoom() {
     return (Math.max(window.innerWidth, window.innerHeight) / GRID_SIZE) * 1.02;
 }
 
+// The empty-cell background — also referenced below when drawing the
+// grid buffer, so there's one definition instead of two hardcoded copies
+// drifting apart.
+const BASE_COLOR = '#2a0000';
+
 // Endesga 32 — a free, widely-used 32-color pixel art palette. Wide hue
 // and shade range, still small enough to keep pixel data compact (one
 // small index per cell) and the whole canvas' palette visually cohesive.
+// BASE_COLOR is appended as color 32 — an "eraser": painting it writes a
+// normal pixel like any other color, it just happens to match the empty
+// background, so it reads as clearing that cell back to blank. There's
+// no real delete here (same reasoning as r/place / wplace.live not
+// having one — see the "should we have undo" note in project history);
+// it's appended at the *end* so it doesn't shift the indices of colors
+// 0–31 already written into existing pixel data.
 const PALETTE = [
     '#be4a2f', '#d77643', '#ead4aa', '#e4a672',
     '#b86f50', '#733e39', '#3e2731', '#a22633',
@@ -62,7 +74,8 @@ const PALETTE = [
     '#124e89', '#0099db', '#2ce8f5', '#ffffff',
     '#c0cbdc', '#8b9bb4', '#5a6988', '#3a4466',
     '#262b44', '#181425', '#ff0044', '#68386c',
-    '#b55088', '#f6757a', '#e8b796', '#c28569'
+    '#b55088', '#f6757a', '#e8b796', '#c28569',
+    BASE_COLOR
 ];
 
 // ─── ELEMENTS (the page is one always-present app shell now — no more
@@ -105,12 +118,15 @@ const camera = { x: 0, y: 0, zoom: 1 };
 
 // ─── palette UI (built once — color choice persists across question
 // switches, same as a real toolbox) ──────────────────────────────────
+const ERASER_INDEX = PALETTE.length - 1; // the appended BASE_COLOR entry
+
 PALETTE.forEach((hex, i) => {
+    const isEraser = i === ERASER_INDEX;
     const btn = document.createElement('button');
-    btn.className = 'swatch' + (i === 0 ? ' is-active' : '');
+    btn.className = 'swatch' + (i === 0 ? ' is-active' : '') + (isEraser ? ' swatch--eraser' : '');
     btn.style.background = hex;
     btn.type = 'button';
-    btn.setAttribute('aria-label', `Color ${i + 1}`);
+    btn.setAttribute('aria-label', isEraser ? 'Erase (paint blank)' : `Color ${i + 1}`);
     btn.addEventListener('click', () => {
         activeColor = i;
         paletteEl.querySelectorAll('.swatch').forEach(s => s.classList.remove('is-active'));
@@ -260,7 +276,7 @@ function draw() {
     const w = window.innerWidth;
     const h = window.innerHeight;
     vctx.clearRect(0, 0, w, h);
-    vctx.fillStyle = '#2a0000';
+    vctx.fillStyle = BASE_COLOR;
     vctx.fillRect(0, 0, w, h);
 
     const tile = GRID_SIZE * camera.zoom;
@@ -634,7 +650,7 @@ async function loadQuestion(slug) {
     if (unsubscribeCurrent) { unsubscribeCurrent(); unsubscribeCurrent = null; }
 
     knownPixels.clear();
-    gctx.fillStyle = '#2a0000';
+    gctx.fillStyle = BASE_COLOR;
     gctx.fillRect(0, 0, GRID_SIZE, GRID_SIZE);
     statsEl.textContent = '';
     placeStatusEl.textContent = 'drag to pan, or switch to paint · right-click drag (or two fingers) always pans';
