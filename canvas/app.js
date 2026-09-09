@@ -74,7 +74,9 @@ const statusEl = document.getElementById('canvasStatus');
 const placeStatusEl = document.getElementById('placeStatus');
 const statsEl = document.getElementById('stats');
 const paletteEl = document.getElementById('palette');
-const selectEl = document.getElementById('questionSelect');
+const questionTriggerEl = document.getElementById('questionTrigger');
+const questionTriggerLabelEl = document.getElementById('questionTriggerLabel');
+const questionMenuEl = document.getElementById('questionMenu');
 
 // Offscreen 1px-per-cell buffer — the source of truth for what's drawn.
 // Updated cell-by-cell as pixels arrive; the visible canvas just scales
@@ -134,14 +136,50 @@ modeMoveBtn.addEventListener('click', () => setMode('move'));
 modePaintBtn.addEventListener('click', () => setMode('paint'));
 
 // ─── question dropdown ──────────────────────────────────────────────
+// A custom trigger + list instead of a native <select>, so opening it
+// shows a panel styled to match the rest of the glass UI (below the
+// button) instead of the browser's own OS-chrome popup.
 Object.values(QUESTIONS).forEach((q) => {
-    const opt = document.createElement('option');
-    opt.value = q.slug;
-    opt.textContent = q.enabled ? q.title : `${q.title} — coming soon`;
-    opt.disabled = !q.enabled;
-    selectEl.appendChild(opt);
+    const li = document.createElement('li');
+    li.className = 'question-menu__item';
+    li.dataset.slug = q.slug;
+    li.setAttribute('role', 'option');
+    li.textContent = q.enabled ? q.title : `${q.title} — coming soon`;
+    if (!q.enabled) li.setAttribute('aria-disabled', 'true');
+    li.addEventListener('click', () => {
+        if (!q.enabled) return;
+        closeQuestionMenu();
+        loadQuestion(q.slug);
+    });
+    questionMenuEl.appendChild(li);
 });
-selectEl.addEventListener('change', () => loadQuestion(selectEl.value));
+
+function openQuestionMenu() {
+    questionMenuEl.hidden = false;
+    questionTriggerEl.setAttribute('aria-expanded', 'true');
+    document.addEventListener('click', onDocumentClickForQuestionMenu, true);
+    document.addEventListener('keydown', onKeydownForQuestionMenu);
+}
+
+function closeQuestionMenu() {
+    questionMenuEl.hidden = true;
+    questionTriggerEl.setAttribute('aria-expanded', 'false');
+    document.removeEventListener('click', onDocumentClickForQuestionMenu, true);
+    document.removeEventListener('keydown', onKeydownForQuestionMenu);
+}
+
+function onDocumentClickForQuestionMenu(e) {
+    if (questionMenuEl.contains(e.target) || questionTriggerEl.contains(e.target)) return;
+    closeQuestionMenu();
+}
+
+function onKeydownForQuestionMenu(e) {
+    if (e.key === 'Escape') closeQuestionMenu();
+}
+
+questionTriggerEl.addEventListener('click', () => {
+    if (questionMenuEl.hidden) openQuestionMenu(); else closeQuestionMenu();
+});
 
 // ─── camera / viewport (the canvas fills the whole window now) ──────
 // window.innerWidth/innerHeight can legitimately be 0 momentarily — a
@@ -586,7 +624,10 @@ async function loadQuestion(slug) {
     if (!question || !question.enabled) return;
 
     currentSlug = slug;
-    selectEl.value = slug;
+    questionTriggerLabelEl.textContent = question.title;
+    questionMenuEl.querySelectorAll('.question-menu__item').forEach((li) => {
+        li.classList.toggle('is-active', li.dataset.slug === slug);
+    });
     document.title = `Pinocchio — ${question.title}`;
     history.replaceState(null, '', `?q=${slug}`);
 

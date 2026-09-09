@@ -136,16 +136,23 @@ body::before {
     /* Scales with viewport the same way question-select does — was a
        flat 32px, which read as small next to the now-bigger prompt pill
        on a real desktop monitor. */
-    height: clamp(32px, 3.4vw, 56px);
+    height: clamp(38px, 4vw, 68px);
     width: auto;
     filter: drop-shadow(0 0 20px rgba(0, 180, 0, 0.3));
 }
 
-.question-select {
+.question-picker {
     position: absolute;
     top: 24px;
     left: 50%;
     transform: translateX(-50%);
+    z-index: 6;
+}
+
+.question-select {
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
     max-width: min(70vw, 640px);
     color: var(--cream);
     font-family: 'Qordhion', serif;
@@ -159,25 +166,81 @@ body::before {
     border-radius: 24px;
     cursor: pointer;
     transition: border-color 0.15s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.question-select:hover {
+.question-select:hover,
+.question-select[aria-expanded="true"] {
     border-color: rgba(0, 170, 0, 0.5);
 }
 
-.question-select option {
-    background: var(--crimson-dark);
+.question-select__chevron {
+    flex-shrink: 0;
+    font-size: 0.7em;
+    opacity: 0.7;
+    transition: transform 0.15s;
+}
+
+.question-select[aria-expanded="true"] .question-select__chevron {
+    transform: rotate(180deg);
+}
+
+/* Dropdown panel — replaces the browser's native <select> popup with
+   something styled to match the rest of the glass UI, opening below the
+   trigger instead of as an OS-chrome overlay. */
+.question-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: max-content;
+    min-width: 100%;
+    max-width: min(80vw, 480px);
+    margin: 0;
+    padding: 6px;
+    border-radius: 16px;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.question-menu[hidden] {
+    display: none;
+}
+
+.question-menu__item {
+    padding: 10px 16px;
+    border-radius: 10px;
+    color: var(--cream-dim);
+    font-family: 'Qordhion', serif;
+    font-size: clamp(13px, 1.3vw, 17px);
+    line-height: 1.35;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.question-menu__item:hover {
+    background: rgba(0, 170, 0, 0.18);
     color: var(--cream);
 }
 
-.question-select option:disabled {
-    color: var(--cream-dim);
+.question-menu__item.is-active {
+    color: var(--green);
+}
+
+.question-menu__item[aria-disabled="true"] {
+    opacity: 0.45;
+    cursor: default;
+    pointer-events: none;
 }
 
 /* ── ZOOM CONTROLS ────────────────────────────── */
 .zoom-controls {
     position: absolute;
-    top: 96px;
+    top: 108px;
     right: 16px;
     display: flex;
     flex-direction: column;
@@ -209,7 +272,7 @@ body::before {
 /* ── MODE TOGGLE ──────────────────────────────── */
 .mode-toggle {
     position: absolute;
-    top: 96px; /* matches zoom-controls' top, mirrored on the left */
+    top: 108px; /* matches zoom-controls' top, mirrored on the left */
     left: 16px;
     display: flex;
     flex-direction: column;

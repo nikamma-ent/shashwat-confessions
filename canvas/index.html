@@ -27,7 +27,14 @@
 
     <header class="topbar">
         <img class="topbar__logo" src="images/pinocchio-typography.png" alt="Pinocchio">
-        <select id="questionSelect" class="glass-panel question-select" aria-label="Choose a question"></select>
+        <div class="question-picker">
+            <button id="questionTrigger" class="glass-panel question-select" type="button"
+                    aria-haspopup="listbox" aria-expanded="false">
+                <span id="questionTriggerLabel">Loading…</span>
+                <span class="question-select__chevron" aria-hidden="true">⌄</span>
+            </button>
+            <ul id="questionMenu" class="glass-panel question-menu" role="listbox" aria-label="Choose a question" hidden></ul>
+        </div>
     </header>
 
     <div class="zoom-controls">
