@@ -139,7 +139,11 @@ body::before {
 }
 
 .question-select {
-    max-width: 56vw;
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: min(60vw, 420px);
     color: var(--cream);
     font-family: 'Qordhion', serif;
     font-size: 14px;
